@@ -18,14 +18,14 @@ app.use(express.json()); // Parse JSON request bodies
 // Routes
 app.get('/', (req, res) => {
     res.json({
-        "msg":"Globe Connect Backend server up and running"
+        "msg":"Globe Connect Backend Server Up and Running"
     });
 });
 
 app.use('/auth', authRouter); // Add the auth routes
-app.use('/tag', tagRouter);
+app.use('/tag', tagRouter); //Add the tag routes
 app.use('/profile', profileRouter); //Add the profile routes
-app.use('/posts', postRoutes); //Add the post routes
+app.use('/post', postRoutes); //Add the post routes
 
 connectToDatabase()
     .then(() => {

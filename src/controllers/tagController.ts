@@ -9,6 +9,8 @@ export const createTag = async (req: Request, res: Response): Promise<void> => {
 
         const newTag: ITag = new Tag({
             name,
+            followed : 0,
+            posts: 0
         });
 
         const savedTag: ITag = await newTag.save();
@@ -24,7 +26,7 @@ export const getAllTags = async (req: Request, res: Response): Promise<void> => 
     try {
         const tags: ITag[] = await Tag.find();
 
-        res.json({ tags });
+        res.json(tags);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch tags' });
     }
