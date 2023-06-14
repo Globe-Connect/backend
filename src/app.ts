@@ -17,7 +17,9 @@ app.use(express.json()); // Parse JSON request bodies
 
 // Routes
 app.get('/', (req, res) => {
-    res.send('Hello, world!');
+    res.json({
+        "msg":"Globe Connect Backend server up and running"
+    });
 });
 
 app.use('/auth', authRouter); // Add the auth routes
