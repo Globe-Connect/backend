@@ -12,12 +12,15 @@ interface CustomRequest extends Request {
 export const createPost = async (req: CustomRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
-        const { content, image } = req.body;
+        const { content, image, tags } = req.body;
 
         const newPost: IPost = new Post({
             user_id: userId,
             content,
+            post_date: Date.now(),
+            tags,
             image,
+            likes_count: 0
         });
 
         const savedPost: IPost = await newPost.save();
@@ -31,7 +34,7 @@ export const createPost = async (req: CustomRequest, res: Response): Promise<voi
 // Get All Posts
 export const getAllPosts = async (req: CustomRequest, res: Response): Promise<void> => {
     try {
-        const posts: IPost[] = await Post.find().populate('likes');
+        const posts: IPost[] = await Post.find().populate('likes').populate('tags');
 
         res.json({ posts });
     } catch (error) {

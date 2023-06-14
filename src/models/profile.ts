@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { IUser } from "./user";
+import { ITag } from "./tag";
 
 interface IProfile extends Document {
     user_id: IUser['_id'];
@@ -7,7 +8,7 @@ interface IProfile extends Document {
     summary: string;
     industry: string;
     website: string;
-    tags: string[]; // Array of tags
+    tags: ITag['_id'][];
 }
 
 const profileSchema = new Schema<IProfile>({
@@ -16,7 +17,7 @@ const profileSchema = new Schema<IProfile>({
     summary: { type: String },
     industry: { type: String },
     website: { type: String },
-    tags: [{ type: String }], // Array of tags
+    tags: [{ type: Schema.Types.ObjectId, ref: 'Tag' }],
 });
 
 const Profile = mongoose.model<IProfile>('Profile', profileSchema);

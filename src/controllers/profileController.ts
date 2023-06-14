@@ -38,7 +38,7 @@ export const getProfile = async (req: CustomRequest, res: Response): Promise<voi
     try {
         const userId = req.user?.id; // Retrieve user ID from the authenticated user
 
-        const profile: IProfile | null = await Profile.findOne({ user_id: userId });
+        const profile: IProfile | null = await Profile.findOne({ user_id: userId }).populate('tags');
 
         if (!profile) {
             res.status(404).json({ error: 'Profile not found' });
@@ -68,7 +68,7 @@ export const updateProfile = async (req: CustomRequest, res: Response): Promise<
                 tags
             },
             { new: true }
-        );
+        ).populate('tags');
 
         if (!updatedProfile) {
             res.status(404).json({ error: 'Profile not found' });
