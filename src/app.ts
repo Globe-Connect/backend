@@ -29,6 +29,7 @@ app.use('/profile', profileRouter); //Add the profile routes
 app.use('/connection', connectionRouter); //Add connection routes
 app.use('/post', postRoutes); //Add the post routes
 
+
 connectToDatabase()
     .then(() => {
         // Database connection successful, start the server
