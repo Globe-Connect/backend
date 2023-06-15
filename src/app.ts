@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import authRouter from './routes/authRoutes';
 import tagRouter from "./routes/tagRoutes";
 import profileRouter from './routes/profileRoutes';
+import connectionRouter from './routes/connectionRoutes';
 import postRoutes from "./routes/postRoutes";
 
 dotenv.config();
@@ -25,6 +26,7 @@ app.get('/', (req, res) => {
 app.use('/auth', authRouter); // Add the auth routes
 app.use('/tag', tagRouter); //Add the tag routes
 app.use('/profile', profileRouter); //Add the profile routes
+app.use('/connection', connectionRouter); //Add connection routes
 app.use('/post', postRoutes); //Add the post routes
 
 connectToDatabase()

@@ -7,10 +7,11 @@
     "start": "node dist/app.js",
     "dev": "ts-node src/app.ts",
     "build": "tsc",
-    "watch": "tsc --watch"
+    "watch": "tsc --watch",
+    "test": "jest"
   },
   "keywords": [],
-  "author": "",
+  "author": "Souvik Mukherjee",
   "license": "ISC",
   "dependencies": {
     "@types/express": "^4.17.17",
@@ -26,6 +27,8 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.2",
-    "@types/jsonwebtoken": "^9.0.2"
+    "@types/jsonwebtoken": "^9.0.2",
+    "jest": "^29.5.0",
+    "supertest": "^6.3.3"
   }
 }
