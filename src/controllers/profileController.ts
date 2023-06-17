@@ -38,7 +38,7 @@ export const getProfile = async (req: CustomRequest, res: Response): Promise<voi
     try {
         const userId = req.user?.id; // Retrieve user ID from the authenticated user
 
-        const profile: IProfile | null = await Profile.findOne({ user_id: userId }).populate('tags');
+        const profile: IProfile | null = await Profile.findOne({ user_id: userId }).populate('tags').populate('connections');
 
         if (!profile) {
             res.status(404).json({ error: 'Profile not found' });
@@ -50,6 +50,7 @@ export const getProfile = async (req: CustomRequest, res: Response): Promise<voi
         res.status(500).json({ error: 'Failed to fetch profile' });
     }
 };
+
 
 // Update Profile
 export const updateProfile = async (req: CustomRequest, res: Response): Promise<void> => {

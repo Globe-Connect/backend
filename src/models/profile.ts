@@ -1,10 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { IUser } from "./user";
-
-interface IConnectionRequest {
-    user_id: IUser['_id'];
-    status: 'pending' | 'accepted' | 'rejected';
-}
+import { IUser } from './user';
+import {Connection, IConnection} from "./connection";
 
 interface IProfile extends Document {
     user_id: IUser['_id'];
@@ -13,8 +9,9 @@ interface IProfile extends Document {
     industry: string;
     website: string;
     tags: mongoose.Types.ObjectId[];
-    connections: IConnectionRequest[];
+    connections: IConnection[];
 }
+
 
 const profileSchema = new Schema<IProfile>({
     user_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
@@ -23,14 +20,9 @@ const profileSchema = new Schema<IProfile>({
     industry: { type: String },
     website: { type: String },
     tags: [{ type: Schema.Types.ObjectId, ref: 'Tag' }],
-    connections: [
-        {
-            user_id: { type: Schema.Types.ObjectId, ref: 'User' },
-            status: { type: String, enum: ['pending', 'accepted', 'rejected'] }
-        }
-    ]
+    connections: [{ type: Schema.Types.ObjectId, ref: 'Connection' }],
 });
 
 const Profile = mongoose.model<IProfile>('Profile', profileSchema);
 
-export { Profile, IProfile };
+export {  Profile, IProfile };

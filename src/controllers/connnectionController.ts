@@ -1,155 +1,154 @@
 import { Request, Response } from 'express';
-import { Profile, IProfile } from '../models/profile';
+import { Connection, IConnection } from '../models/connection';
+import { User, IUser } from '../models/user';
+import { Profile } from "../models/profile";
 
 interface CustomRequest extends Request {
     user?: {
         id: string;
     };
+    params: {
+        userId: string;
+        connectionId: string;
+    };
 }
 
-// Send Connection Request
-export const sendConnectionRequest = async (
-    req: CustomRequest,
-    res: Response
-): Promise<void> => {
+// Generate Connections based on user's state and country
+export const generateConnections = async (req: CustomRequest, res: Response): Promise<void> => {
     try {
-        const senderId = req.user?.id;
-        const receiverId = req.params.receiverId;
+        const userId = req.user?.id; // Retrieve user ID from the authenticated user
+        const otherUserId = req.params.userId; // Retrieve other user ID from the request parameters
 
-        const senderProfile: IProfile | null = await Profile.findOne({
-            user_id: senderId,
-        });
-        const receiverProfile: IProfile | null = await Profile.findOne({
-            user_id: receiverId,
-        });
+        // Get the authenticated user's state and country
+        const user: IUser | null = await User.findOne({ _id: userId });
 
-        if (!senderProfile || !receiverProfile) {
-            res.status(404).json({ error: 'Profile not found' });
+        if (!user) {
+            res.status(404).json({ error: 'User not found' });
             return;
         }
 
-        // Check if a connection request already exists
-        const existingRequest = senderProfile.connections.find(
-            (request) => request.user_id.toString() === receiverId
-        );
+        const userState = user.state;
+        const userCountry = user.country;
 
-        if (existingRequest) {
-            res.status(400).json({ error: 'Connection request already sent' });
+        // Get the other user's state and country
+        const otherUser: IUser | null = await User.findOne({ _id: otherUserId });
+
+        if (!otherUser) {
+            res.status(404).json({ error: 'Other user not found' });
             return;
         }
 
-        senderProfile.connections.push({
-            user_id: receiverId,
+        const otherUserState = otherUser.state;
+        const otherUserCountry = otherUser.country;
+
+        // Determine the connection level based on the states
+        let level = 0;
+
+        if (userState === otherUserState) {
+            level = 1;
+        } else if (userCountry === otherUserCountry) {
+            level = 2;
+        } else {
+            level = 3;
+        }
+
+        // Create a new connection
+        const newConnection: IConnection = new Connection({
+            fromUserId: userId,
+            toUserId: otherUserId,
             status: 'pending',
+            level: level,
         });
 
-        await senderProfile.save();
+        // Find the user profile by user ID
+        const userProfile = await Profile.findOne({ user_id: userId });
 
-        res.json({ message: 'Connection request sent successfully' });
+        if (!userProfile) {
+            throw new Error('User profile not found');
+        }
+
+        const savedConnection = await newConnection.save();
+
+        // Update the user profile with the new connection ID
+        userProfile.connections.push(savedConnection._id);
+        await userProfile.save();
+
+        res.json({ message: 'Connection request sent' });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to send connection request' });
+        res.status(500).json({ error: 'Failed to generate connections' });
     }
 };
 
-// Accept Connection Request
-export const acceptConnectionRequest = async (
-    req: CustomRequest,
-    res: Response
-): Promise<void> => {
+// Accept a connection request
+export const acceptConnection = async (req: CustomRequest, res: Response): Promise<void> => {
     try {
-        const receiverId = req.user?.id;
-        const senderId = req.params.senderId;
+        const userId = req.user?.id; // Retrieve user ID from the authenticated user
+        const connectionId = req.params.connectionId; // Retrieve connection ID from the request parameters
 
-        const receiverProfile: IProfile | null = await Profile.findOne({
-            user_id: receiverId,
-        });
+        console.log(connectionId);
 
-        if (!receiverProfile) {
-            res.status(404).json({ error: 'Profile not found' });
-            return;
-        }
-
-        const connectionRequest = receiverProfile.connections.find(
-            (request) =>
-                request.user_id.toString() === senderId && request.status === 'pending'
+        // Find the connection and update its status to 'accepted'
+        const connection: IConnection | null = await Connection.findOneAndUpdate(
+            { _id: connectionId }, // Find the connection by ID and the authenticated user as the recipient
+            { status: 'accepted' },
+            { new: true }
         );
 
-        if (!connectionRequest) {
-            res.status(400).json({ error: 'Connection request not found' });
+        if (!connection) {
+            res.status(404).json({ error: 'Connection not found' });
             return;
         }
 
-        connectionRequest.status = 'accepted';
+        // Update user profiles
+        const userTwoProfile = await Profile.findOne({ user_id: connection.toUserId });
 
-        await receiverProfile.save();
+        if (!userTwoProfile) {
+            throw new Error('User profile not found');
+        }
 
-        res.json({ message: 'Connection request accepted' });
+        userTwoProfile.connections.push(connection);
+
+        await Promise.all([ userTwoProfile.save()]);
+
+        res.json({ connection });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to accept connection request' });
+        res.status(500).json({ error: 'Failed to accept connection' });
     }
 };
 
-// Reject Connection Request
-export const rejectConnectionRequest = async (
-    req: CustomRequest,
-    res: Response
-): Promise<void> => {
+// Reject a connection request
+export const rejectConnection = async (req: CustomRequest, res: Response): Promise<void> => {
     try {
-        const receiverId = req.user?.id;
-        const senderId = req.params.senderId;
+        const connectionId = req.params.connectionId; // Retrieve connection ID from the request parameters
 
-        const receiverProfile: IProfile | null = await Profile.findOne({
-            user_id: receiverId,
-        });
+        // Find the connection
+        const connection : IConnection | null = await Connection.findById(connectionId);
 
-        if (!receiverProfile) {
-            res.status(404).json({ error: 'Profile not found' });
+        if (!connection) {
+            res.status(404).json({ error: 'Connection not found' });
             return;
         }
 
-        const connectionRequest = receiverProfile.connections.find(
-            (request) =>
-                request.user_id.toString() === senderId && request.status === 'pending'
-        );
+        const fromUserId = connection.fromUserId;
 
-        if (!connectionRequest) {
-            res.status(400).json({ error: 'Connection request not found' });
-            return;
+        // Delete the connection document
+        await Connection.findByIdAndDelete({ _id: connectionId });
+
+        // Update user profile
+        const userProfile = await Profile.findOne({ user_id: fromUserId });
+
+        if (!userProfile) {
+            throw new Error('User profile not found');
         }
 
-        connectionRequest.status = 'rejected';
+        // Remove connection object from user profile
+        userProfile.connections = userProfile.connections.filter((conn) => conn.toString() !== connectionId);
 
-        await receiverProfile.save();
+        await userProfile.save();
 
-        res.json({ message: 'Connection request rejected' });
+        res.json({ "msg" :"Connection Request Rejected" });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to reject connection request' });
+        res.status(500).json({ error: 'Failed to reject connection' });
     }
 };
 
-// Get User's Connections
-export const getUserConnections = async (
-    req: CustomRequest,
-    res: Response
-): Promise<void> => {
-    try {
-        const userId = req.user?.id;
-
-        const profile: IProfile | null = await Profile.findOne({
-            user_id: userId,
-        }).populate('connections.user_id');
-
-        if (!profile) {
-            res.status(404).json({ error: 'Profile not found' });
-            return;
-        }
-
-        const connections = profile.connections.filter(
-            (request) => request.status === 'accepted'
-        );
-
-        res.json({ connections });
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch connections' });
-    }
-};

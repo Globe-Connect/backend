@@ -1,24 +1,20 @@
-import express, { Request, Response } from 'express';
-import authMiddleware from '../middlewares/authMiddleware';
+import express from 'express';
 import {
-    sendConnectionRequest,
-    acceptConnectionRequest,
-    rejectConnectionRequest,
-    getUserConnections,
+    generateConnections,
+    acceptConnection,
+    rejectConnection
 } from '../controllers/connnectionController';
+import authMiddleware from '../middlewares/authMiddleware';
 
 const router = express.Router();
 
-// Send Connection Request route
-router.post('/connections/:receiverId', authMiddleware, sendConnectionRequest);
+// Generate Connections route
+router.get('/generate/:userId', authMiddleware, generateConnections);
 
-// Accept Connection Request route
-router.post('/connections/:requestId/accept', authMiddleware, acceptConnectionRequest);
+// Accept connection route
+router.put('/accept/:connectionId', authMiddleware, acceptConnection);
 
-// Reject Connection Request route
-router.post('/connections/:requestId/reject', authMiddleware, rejectConnectionRequest);
-
-// Get User Connections route
-router.get('/connections', authMiddleware, getUserConnections);
+// Reject connection route
+router.put('/reject/:connectionId', authMiddleware, rejectConnection);
 
 export default router;

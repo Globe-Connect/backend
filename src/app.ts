@@ -7,6 +7,7 @@ import rateLimit from 'express-rate-limit';
 import mongoSanitize from 'express-mongo-sanitize';
 import hpp from 'hpp';
 import cors from 'cors';
+import bodyParser from 'body-parser';
 
 import authRouter from './routes/authRoutes';
 import tagRouter from "./routes/tagRoutes";
@@ -20,7 +21,11 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Middleware
-app.use(express.json()); // Parse JSON request bodies
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({
+    extended: false
+}));
+
 app.use(helmet()); // Set various HTTP headers for security
 app.use(
     rateLimit({
